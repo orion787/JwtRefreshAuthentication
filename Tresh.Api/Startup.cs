@@ -34,6 +34,20 @@ namespace Tresh.Api
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Tresh.Api", Version = "v1" });
             });
 
+            var key = Encoding.ASCII.GetBytes(Configuration["JwtConfig:Secret"]);
+
+            var tokenValidationParams = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                RequireExpirationTime = false //!!!! etc 1 hour
+            };
+
+            services.AddSingleton(tokenValidationParams);
+
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -42,19 +56,9 @@ namespace Tresh.Api
             })
             .AddJwtBearer(jwt =>
             {
-                var key = Encoding.ASCII.GetBytes(Configuration["JwtConfig:Secret"]);
-
                 jwt.SaveToken = true;
 
-                jwt.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateLifetime = true,
-                    RequireExpirationTime = false //!!!! etc 1 hour
-                };
+                jwt.TokenValidationParameters = tokenValidationParams;
             });
 
             services.AddHttpContextAccessor();
